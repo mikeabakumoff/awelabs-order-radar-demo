@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AweLabs - радар заказов (демо)</title>
+<meta name="description" content="Демо AweLabs: радар следит за Telegram-чатами, находит заявки по ключевым словам, GPT оценивает лид и готовит черновик ответа.">
+<meta name="theme-color" content="#0a0a0b">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0a0b'/%3E%3Cpath d='M6.5 12.2Q8 10 11 10q5 0 5 4v10M16 17.2h-4.6Q6.5 17.2 6.5 20.7T11.2 24.2q3.3 0 4.8-2.6' fill='none' stroke='%23e8f0e8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='19.5' y='8' width='6.5' height='16.5' fill='%2300ff41'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@400;600&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0b;--bg2:#0d120e;--bg3:#121a14;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.13);--text:#e8f0e8;--muted:#7a857c;--g:#00ff41;--g2:#00b82e;--warn:#e8c45a;--blue:#6ab7ff;--red:#ff6b5a;--lime:#e8f55a;
+--head:'Unbounded',sans-serif;--body:'Mulish',sans-serif;--mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%);opacity:.6}
+a{color:inherit;text-decoration:none}button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.app{position:relative;display:grid;grid-template-rows:auto auto 1fr;height:100vh;max-width:1400px;margin:0 auto;padding:0 20px 20px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px;border-bottom:1px solid var(--line)}
+.logo{font:700 18px var(--mono);display:flex;align-items:center}.logo .u{color:var(--g)}
+.cur{display:inline-block;width:.55em;height:1.05em;background:var(--g);margin-left:4px;box-shadow:0 0 10px rgba(0,255,65,.5);animation:bl 1.05s steps(1) infinite}@keyframes bl{50%{opacity:0}}
+.ttl{font:12px var(--mono);color:var(--muted);display:flex;align-items:center;gap:10px}.ttl b{color:var(--text);font-weight:500}
+.pill{border:1px solid rgba(0,255,65,.35);color:var(--g);border-radius:999px;padding:3px 10px;font:11px var(--mono)}
+.right{display:flex;align-items:center;gap:10px}
+.lang{display:flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden}.lang button{color:var(--muted);font:500 12px var(--mono);padding:6px 12px}.lang button.on{background:var(--g);color:var(--bg)}
+.back{font:12px var(--mono);color:var(--muted)}.back:hover{color:var(--g)}
+.note{margin:14px 0;padding:10px 14px;border:1px dashed var(--line2);border-radius:10px;font:12px var(--mono);color:var(--muted)}.note b{color:var(--text);font-weight:500}
+.main{display:grid;grid-template-columns:270px 1fr 400px;gap:16px;min-height:0}
+.panel{background:var(--bg2);border:1px solid var(--line);border-radius:16px;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.side{padding:16px;gap:16px;overflow:auto}
+.side h4{font:11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;justify-content:space-between}
+.chats{list-style:none;display:flex;flex-direction:column;gap:2px}
+.chats li{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;font-size:13px;color:var(--muted);transition:.3s}
+.chats li i{width:6px;height:6px;border-radius:50%;background:var(--g2);flex:none}
+.chats li.ping{background:rgba(0,255,65,.08);color:var(--text)}.chats li.ping i{background:var(--g);box-shadow:0 0 8px var(--g)}
+.chats li.new{animation:nw 1.2s}@keyframes nw{from{background:rgba(232,245,90,.2)}}
+.kw{display:flex;flex-wrap:wrap;gap:6px}
+.kw span{font:11px var(--mono);padding:3px 8px;border-radius:6px;border:1px solid var(--line2);color:var(--muted)}
+.disc{display:flex;flex-direction:column;gap:8px}
+.dg{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg);font-size:13px}
+.dg b{display:block;font-weight:600}
+.dg div{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font:11px var(--mono);color:var(--muted)}
+.dg button{font:11px var(--mono);color:var(--lime);border:1px solid rgba(232,245,90,.45);border-radius:7px;padding:3px 8px}
+.dg button:disabled{color:var(--g);border-color:rgba(0,255,65,.4);cursor:default}
+.fh{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.live{display:flex;align-items:center;gap:8px;font:12px var(--mono);color:var(--g)}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--g);box-shadow:0 0 8px var(--g);animation:pl 1.4s infinite}@keyframes pl{50%{opacity:.3}}
+.live.off{color:var(--muted)}.live.off i{background:var(--muted);box-shadow:none;animation:none}
+.ctl{font:12px var(--mono);padding:6px 12px;border:1px solid var(--line2);border-radius:8px}.ctl:hover{border-color:var(--g);color:var(--g)}
+.cnt{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+.cnt div{padding:10px 14px;border-right:1px solid var(--line)}.cnt div:last-child{border-right:0}
+.cnt b{display:block;font:500 18px var(--head)}.cnt span{font-size:11.5px;color:var(--muted)}
+.cnt .h b{color:var(--g)}
+.feed{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:8px}
+.it{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);animation:in .35s;text-align:left;width:100%}
+@keyframes in{from{opacity:0;transform:translateY(-6px)}}
+.it .ch{font:11px var(--mono);color:var(--muted)}
+.it .tx{grid-column:1/-1;font-size:14px}
+.it.noise{opacity:.42;border-style:dashed;cursor:default}
+.it.match{cursor:pointer}.it.match:hover{border-color:var(--line2)}
+.it.sel{border-color:var(--g);box-shadow:0 0 0 1px rgba(0,255,65,.2)}
+.it mark{background:rgba(232,245,90,.18);color:var(--lime);border-radius:3px;padding:0 2px}
+.tg{font:11px var(--mono);padding:2px 9px;border-radius:999px;border:1px solid;white-space:nowrap;align-self:start}
+.tg.hot{color:var(--g);border-color:rgba(0,255,65,.5);background:rgba(0,255,65,.08)}
+.tg.warm{color:var(--warn);border-color:rgba(232,195,90,.5)}
+.tg.cold{color:var(--blue);border-color:rgba(106,183,255,.45)}
+.tg.skip{color:var(--muted);border-color:var(--line2)}
+.tg.wait{color:var(--muted);border-color:var(--line2);animation:pl 1s infinite}
+.det{overflow:auto;padding:16px;gap:14px}
+.box{border:1px solid var(--line);border-radius:14px;background:var(--bg);padding:14px}
+.box h5{font:11px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.quote{font-size:14.5px;border-left:2px solid var(--g2);padding-left:12px}
+.meta{font:11.5px var(--mono);color:var(--muted);margin-top:8px}
+.why{list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.why li::before{content:"› ";color:var(--g)}
+.score{display:flex;gap:6px;margin-bottom:10px}
+.score i{flex:1;height:6px;border-radius:3px;background:var(--bg3)}
+.score.hot i:nth-child(-n+3),.score.warm i:nth-child(-n+2),.score.cold i:nth-child(1){background:currentColor}
+.score.hot{color:var(--g)}.score.warm{color:var(--warn)}.score.cold{color:var(--blue)}
+.draft{border:1px solid rgba(0,255,65,.3);background:rgba(0,255,65,.04);border-radius:12px;padding:12px;font-size:14px;white-space:pre-line}
+.acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.acts button{padding:9px 14px;border-radius:10px;font-size:13px;border:1px solid var(--line2)}
+.acts button.p{background:var(--lime);color:var(--bg);border-color:var(--lime);font-weight:600}
+.acts button.ok{border-color:var(--g);color:var(--g)}
+.empty{font-size:14px;color:var(--muted);text-align:center;padding:30px 10px}
+.empty span{display:block;font:22px var(--mono);color:var(--line2);margin-bottom:8px}
+@media(max-width:1180px){.main{grid-template-columns:1fr 380px}.side{display:none}}
+@media(max-width:820px){.app{height:auto;min-height:100vh}.main{grid-template-columns:1fr}.feedp{height:72vh}.cnt{grid-template-columns:1fr 1fr}.cnt div:nth-child(2){border-right:0}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div style="display:flex;align-items:center;gap:18px">
+      <a class="logo" href="https://awelabs.io" aria-label="AweLabs">awe<span class="u">_</span>labs<span class="cur"></span></a>
+      <div class="ttl"><b data-i="app"></b><span class="pill">demo</span></div>
+    </div>
+    <div class="right"><a class="back" href="https://awelabs.io/#products" data-i="back"></a><div class="lang"><button data-set="ru">RU</button><button data-set="en">EN</button></div></div>
+  </div>
+  <div class="note" data-i="note" data-html></div>
+  <div class="main">
+    <aside class="panel side">
+      <div><h4><span data-i="hChats"></span><span id="nChats"></span></h4><ul class="chats" id="chats"></ul></div>
+      <div><h4 data-i="hKw"></h4><div class="kw" id="kw"></div></div>
+      <div><h4 data-i="hDisc"></h4><div class="disc" id="disc"></div></div>
+    </aside>
+    <section class="panel feedp">
+      <div class="fh"><div class="live" id="live"><i></i><span data-i="live"></span></div><button class="ctl" id="pause"></button></div>
+      <div class="cnt"><div><b id="cS">0</b><span data-i="cS"></span></div><div><b id="cM">0</b><span data-i="cM"></span></div><div class="h"><b id="cH">0</b><span data-i="cH"></span></div><div><b id="cD">0</b><span data-i="cD"></span></div></div>
+      <div class="feed" id="feed"></div>
+    </section>
+    <section class="panel det" id="det"></section>
+  </div>
+</div>
+<script>
+var T={
+ru:{app:"Радар заказов в Telegram-чатах",back:"← на awelabs.io",
+note:"<b>Демо на выдуманных данных.</b> Чаты и сообщения ненастоящие. Лента идёт сама: совпадения по ключевым словам подсвечиваются, GPT ставит оценку. Нажмите на лид, чтобы увидеть разбор и черновик ответа.",
+hChats:"Мониторинг",hKw:"Ключевые слова",hDisc:"Найдены новые группы",live:"сканирую 24/7",paused:"пауза",pause:"пауза",play:"продолжить",
+cS:"просканировано",cM:"совпадений",cH:"горячих",cD:"черновиков",
+hot:"горячий",warm:"тёплый",cold:"холодный",skip:"пропуск",wait:"GPT…",
+hLead:"Лид",hWhy:"Почему такая оценка",hDraft:"Черновик ответа",copy:"Скопировать",copied:"Скопировано",open:"Открыть в чате",add:"+ в мониторинг",added:"✓ добавлена",rel:"релевантность",
+noDraft:"Черновик не нужен: лид не целевой, время специалиста не тратим.",
+empty:"Горячие заявки появятся здесь",ago:"только что",
+kw:["бот","разработчик","автоматизац","CRM","интеграц","Telegram","нужен","ищу","подрядчик","бюджет"],
+chats:["Предприниматели Паттайи","Бизнес в Таиланде","Фриланс | заказы","IT-чат Пхукет","Маркетологи RU","Владельцы онлайн-школ","Недвижимость Азии","Стартапы и инвесторы","Digital-агентства","Барахолка Паттайя","Русские в Бангкоке","Кофейни и рестораны","Ecommerce-чат","Нужен специалист","No-code и автоматизация","Экспаты Ко Самуи"],
+disc:[["Стартапы Юго-Восточной Азии",82,"12 400"],["Владельцы кафе Паттайя",74,"3 100"],["Digital nomads Thailand",61,"28 900"]],
+F:[
+ [9,"Продам скутер Honda Click 2021, пробег 8 тыс.",null],
+ [0,"Ищу разработчика: нужен Telegram-бот для приёма заказов в кафе, с оплатой. Бюджет есть, запуск нужен в декабре",{l:"hot",k:["Ищу разработчика","Telegram-бот","Бюджет"],w:["конкретная задача: приём заказов + оплата","бюджет подтверждён, есть срок","совпадает с профилем: боты для бизнеса"],d:"Здравствуйте! Делаю Telegram-ботов для кафе: приём заказов, онлайн-оплата, уведомления на кухню.\nМогу показать похожий проект и прикинуть сроки под декабрь. Подскажите: меню уже есть в таблице или на сайте, и какая оплата нужна?"}],
+ [10,"Где сейчас выгоднее поменять рубли?",null],
+ [4,"Подскажите, реально ли автоматизировать ответы клиентам в директе?",{l:"warm",k:["автоматизировать"],w:["интерес к автоматизации есть","нет конкретики по задаче и бюджету","стоит ответить и выяснить детали"],d:"Да, реально: бот отвечает на типовые вопросы, собирает заявку и передаёт её вам.\nСколько примерно сообщений в день приходит и какие вопросы чаще всего? Подскажу, что лучше автоматизировать."}],
+ [1,"Кто едет на Ко Лан в субботу? Есть 2 места в машине",null],
+ [13,"Сколько вообще стоит чат-бот? Просто интересно",{l:"cold",k:["чат-бот"],w:["прицениваются, задачи нет","без срока и бюджета","ответить коротко, не тратить время"],d:"Зависит от задачи: простой бот с меню от $35, бот с GPT и заявками от $180. Если появится конкретная задача, напишите, оценю бесплатно."}],
+ [2,"Сделаю бота за 500р, пишите в лс",{l:"skip",k:["бота"],w:["это предложение услуг, а не заказ","конкурент, не клиент"]}],
+ [6,"Нужна CRM для агентства недвижимости + интеграция с ботом. Кто делал? В личку с примерами",{l:"hot",k:["CRM","интеграция"],w:["задача ровно в профиль: CRM + боты для недвижимости","просят примеры - готовы выбирать подрядчика","есть живой кейс для показа"],d:"Здравствуйте! Как раз делал CRM для агентства недвижимости: заявки, объекты, воронка продажи и аренды, договоры из данных сделки, плюс AI-бот на площадках объявлений.\nМогу показать демо и рассказать, как это работает у агентства каждый день. Сколько у вас агентов и откуда сейчас приходят заявки?"}],
+ [11,"Посоветуйте поставщика кофе в зёрнах в Паттайе",null],
+ [14,"Хочу автопостинг в канал из Google-таблицы, есть готовые решения?",{l:"warm",k:["автопостинг","Google"],w:["понятная мини-задача","может хватить готового сервиса","хороший вход для дальнейшей автоматизации"],d:"Есть два пути: готовый сервис (быстро, но ограничено) или свой бот, который берёт строки из таблицы, публикует по расписанию и отмечает опубликованное.\nСколько постов в день и нужны ли картинки? Скажу, какой вариант выгоднее."}],
+ [15,"Кто знает хорошего стоматолога на Самуи?",null],
+ [3,"Ищем подрядчика: уведомления о новых заявках с сайта в Telegram + отчёт в Google Sheets. ТЗ готово, бюджет обсуждаем",{l:"hot",k:["Ищем подрядчика","Telegram","Google Sheets","бюджет"],w:["ТЗ готово - можно оценить сразу","задача типовая, быстрый запуск","бюджет открыт к обсуждению"],d:"Здравствуйте! Сделаю: заявки с сайта сразу в Telegram, плюс ежедневная выгрузка в Google Sheets с итогами.\nПришлите ТЗ, в течение дня дам оценку по срокам и стоимости."}],
+ [12,"Скидки на Black Friday у кого какие?",null]
+]},
+en:{app:"Order radar for Telegram chats",back:"← back to awelabs.io",
+note:"<b>Demo with made-up data.</b> Chats and messages are fictional. The feed runs by itself: keyword matches are highlighted and GPT rates each lead. Click a lead to see the reasoning and a draft reply.",
+hChats:"Monitoring",hKw:"Keywords",hDisc:"New groups found",live:"scanning 24/7",paused:"paused",pause:"pause",play:"resume",
+cS:"scanned",cM:"matches",cH:"hot",cD:"drafts",
+hot:"hot",warm:"warm",cold:"cold",skip:"skip",wait:"GPT…",
+hLead:"Lead",hWhy:"Why this rating",hDraft:"Draft reply",copy:"Copy",copied:"Copied",open:"Open in chat",add:"+ monitor",added:"✓ added",rel:"relevance",
+noDraft:"No draft needed: not a fit, the specialist's time is saved.",
+empty:"Hot requests will appear here",ago:"just now",
+kw:["bot","developer","automat","CRM","integrat","Telegram","need","looking for","contractor","budget"],
+chats:["Pattaya Entrepreneurs","Business in Thailand","Freelance | Orders","IT Chat Phuket","Marketers Hub","Online School Owners","Asia Real Estate","Startups & Investors","Digital Agencies","Pattaya Flea Market","Bangkok Expats","Cafes & Restaurants","Ecommerce Chat","Need a Specialist","No-code & Automation","Koh Samui Expats"],
+disc:[["SEA Startups",82,"12,400"],["Pattaya Cafe Owners",74,"3,100"],["Digital nomads Thailand",61,"28,900"]],
+F:[
+ [9,"Selling a Honda Click 2021 scooter, 8k km",null],
+ [0,"Looking for a developer: need a Telegram bot to take orders for a cafe, with payments. Budget is there, launch in December",{l:"hot",k:["Looking for a developer","Telegram bot","Budget"],w:["concrete task: orders + payments","budget confirmed, deadline set","matches the profile: bots for business"],d:"Hi! I build Telegram bots for cafes: order intake, online payments, kitchen notifications.\nHappy to show a similar project and estimate a December timeline. Is your menu already in a spreadsheet or on a website, and which payment method do you need?"}],
+ [10,"Where's the best place to exchange money now?",null],
+ [4,"Is it realistic to automate replies to customers in Instagram DMs?",{l:"warm",k:["automate"],w:["interested in automation","no specifics on task or budget","worth replying to find out more"],d:"Yes: a bot answers common questions, collects the request and passes it to you.\nRoughly how many messages a day do you get, and what do people ask most? I'll suggest what's worth automating."}],
+ [1,"Anyone going to Koh Larn on Saturday? 2 seats in the car",null],
+ [13,"How much does a chatbot cost anyway? Just curious",{l:"cold",k:["chatbot"],w:["price shopping, no task","no deadline or budget","reply briefly, don't spend time"],d:"Depends on the task: a simple menu bot from $35, a GPT bot with lead capture from $180. If a concrete task comes up, message me for a free estimate."}],
+ [2,"Will build a bot for $5, DM me",{l:"skip",k:["bot"],w:["this is an offer, not an order","a competitor, not a client"]}],
+ [6,"Need a CRM for a real estate agency + bot integration. Who has done this? DM me with examples",{l:"hot",k:["CRM","integration"],w:["exactly our profile: CRM + bots for real estate","asking for examples - ready to choose a contractor","we have a live case to show"],d:"Hi! I've built exactly that for a real estate agency: leads, listings, sale and rent pipelines, contracts from deal data, plus an AI bot on listing sites.\nI can show you a demo and how the agency uses it every day. How many agents do you have and where do leads come from now?"}],
+ [11,"Recommend a coffee bean supplier in Pattaya?",null],
+ [14,"I want auto-posting to a channel from Google Sheets, any ready solutions?",{l:"warm",k:["auto-posting","Google"],w:["clear small task","a ready service may be enough","good entry point for more automation"],d:"Two options: a ready service (fast but limited) or your own bot that takes rows from the sheet, posts on schedule and marks what's published.\nHow many posts a day, and do you need images? I'll tell you which is cheaper."}],
+ [15,"Anyone know a good dentist on Samui?",null],
+ [3,"Looking for a contractor: Telegram alerts for new website requests + a Google Sheets report. Spec is ready, budget negotiable",{l:"hot",k:["Looking for a contractor","Telegram","Google Sheets","budget"],w:["spec is ready - can quote right away","standard task, quick launch","budget open"],d:"Hi! I can do that: website requests straight to Telegram, plus a daily export to Google Sheets with totals.\nSend the spec and I'll quote time and cost within a day."}],
+ [12,"What Black Friday deals is everyone seeing?",null]
+]}};
+var L='ru';try{L=localStorage.getItem('rd_lang')||((navigator.language||'').slice(0,2)==='ru'?'ru':'en')}catch(e){}
+var $=function(i){return document.getElementById(i)},idx=0,run=true,timer=null,sel=null,c={s:0,m:0,h:0,d:0},nChats=16,items=[];
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function hl(text,keys){var t=esc(text);(keys||[]).forEach(function(k){var re=new RegExp('('+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','i');t=t.replace(re,'<mark>$1</mark>')});return t}
+function apply(){var t=T[L];document.documentElement.lang=L;
+  document.querySelectorAll('[data-i]').forEach(function(el){var v=t[el.dataset.i];if(v==null)return;el.hasAttribute('data-html')?el.innerHTML=v:el.textContent=v});
+  document.querySelectorAll('.lang button').forEach(function(b){b.classList.toggle('on',b.dataset.set===L)});
+  $('kw').innerHTML=t.kw.map(function(k){return'<span>'+esc(k)+'</span>'}).join('');
+  $('chats').innerHTML=t.chats.map(function(n,i){return'<li data-c="'+i+'"><i></i>'+esc(n)+'</li>'}).join('');
+  $('disc').innerHTML=t.disc.map(function(d,i){return'<div class="dg"><b>'+esc(d[0])+'</b><div><span>'+t.rel+' '+d[1]+'% · '+d[2]+'</span><button data-d="'+i+'">'+t.add+'</button></div></div>'}).join('');
+  document.querySelectorAll('[data-d]').forEach(function(b){b.onclick=function(){var d=t.disc[+b.dataset.d];b.disabled=true;b.textContent=t.added;nChats++;$('nChats').textContent=nChats;
+    var li=document.createElement('li');li.className='new';li.dataset.c=t.chats.length+(+b.dataset.d);li.innerHTML='<i></i>'+esc(d[0]);$('chats').appendChild(li)}});
+  $('nChats').textContent=nChats;setPause();
+}
+function setPause(){var t=T[L];$('pause').textContent=run?'❚❚ '+t.pause:'▶ '+t.play;$('live').classList.toggle('off',!run);$('live').querySelector('span').textContent=run?t.live:t.paused}
+function upC(){$('cS').textContent=c.s.toLocaleString(L==='ru'?'ru-RU':'en-US');$('cM').textContent=c.m;$('cH').textContent=c.h;$('cD').textContent=c.d}
+function ping(ci){var li=document.querySelector('[data-c="'+ci+'"]');if(!li)return;li.classList.add('ping');setTimeout(function(){li.classList.remove('ping')},900)}
+function step(){
+  var t=T[L],f=t.F[idx%t.F.length],n=idx;idx++;
+  c.s+=20+Math.floor(Math.random()*45);ping(f[0]);
+  var el=document.createElement('button'),info=f[2];
+  el.className='it '+(info?'match':'noise');
+  el.innerHTML='<span class="ch"># '+esc(t.chats[f[0]])+' · '+t.ago+'</span>'+(info?'<span class="tg wait">'+t.wait+'</span>':'<span></span>')+'<span class="tx">'+hl(f[1],info&&info.k)+'</span>';
+  $('feed').prepend(el);
+  if(info){c.m++;var rec={f:f,el:el,n:n};items.push(rec);
+    el.onclick=function(){select(rec)};
+    setTimeout(function(){var tg=el.querySelector('.tg');tg.className='tg '+info.l;tg.textContent=t[info.l];
+      if(info.l==='hot')c.h++;if(info.d)c.d++;upC();if(info.l==='hot'&&(!sel||sel.f[2].l!=='hot'))select(rec)},1100);}
+  while($('feed').children.length>40)$('feed').lastChild.remove();
+  upC();
+}
+function select(rec){var t=T[L],info=rec.f[2];sel=rec;
+  document.querySelectorAll('.it.sel').forEach(function(e){e.classList.remove('sel')});rec.el.classList.add('sel');
+  var draft=info.d?'<div class="box"><h5>'+t.hDraft+'</h5><div class="draft">'+esc(info.d)+'</div><div class="acts"><button class="p" id="cp">'+t.copy+'</button><button>'+t.open+' ↗</button></div></div>':'<div class="box"><div class="empty" style="padding:10px;text-align:left">'+t.noDraft+'</div></div>';
+  $('det').innerHTML='<div class="box"><h5><span>'+t.hLead+'</span><span class="tg '+info.l+'">'+t[info.l]+'</span></h5><div class="quote">'+hl(rec.f[1],info.k)+'</div><div class="meta"># '+esc(t.chats[rec.f[0]])+' · '+t.ago+'</div></div>'+
+   '<div class="box"><h5>'+t.hWhy+'</h5>'+(info.l!=='skip'?'<div class="score '+info.l+'"><i></i><i></i><i></i></div>':'')+'<ul class="why">'+info.w.map(function(w){return'<li>'+esc(w)+'</li>'}).join('')+'</ul></div>'+draft;
+  var cp=$('cp');if(cp)cp.onclick=function(){try{navigator.clipboard.writeText(info.d)}catch(e){}cp.textContent=t.copied;cp.className='ok'};
+}
+function emptyDet(){$('det').innerHTML='<div class="box"><div class="empty"><span>( • )</span>'+T[L].empty+'</div></div>'}
+function loop(){clearInterval(timer);if(run)timer=setInterval(step,1700)}
+$('pause').onclick=function(){run=!run;setPause();loop()};
+document.querySelectorAll('.lang button').forEach(function(b){b.onclick=function(){L=b.dataset.set;try{localStorage.setItem('rd_lang',L)}catch(e){}
+  idx=0;sel=null;items=[];c={s:0,m:0,h:0,d:0};nChats=16;$('feed').innerHTML='';apply();upC();emptyDet();step();loop()}});
+apply();upC();emptyDet();step();loop();
+</script>
+</body>
+</html>
