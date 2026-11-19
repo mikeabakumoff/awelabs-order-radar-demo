@@ -226,7 +226,7 @@ function select(rec){var t=T[L],info=rec.f[2];sel=rec;
   var cp=$('cp');if(cp)cp.onclick=function(){try{navigator.clipboard.writeText(info.d)}catch(e){}cp.textContent=t.copied;cp.className='ok'};
 }
 function emptyDet(){$('det').innerHTML='<div class="box"><div class="empty"><span>( • )</span>'+T[L].empty+'</div></div>'}
-function loop(){clearInterval(timer);if(run)timer=setInterval(step,1700)}
+function loop(){clearInterval(timer);if(run)timer=setInterval(step,1100)}
 $('pause').onclick=function(){run=!run;setPause();loop()};
 document.querySelectorAll('.lang button').forEach(function(b){b.onclick=function(){L=b.dataset.set;try{localStorage.setItem('rd_lang',L)}catch(e){}
   idx=0;sel=null;items=[];c={s:0,m:0,h:0,d:0};nChats=16;$('feed').innerHTML='';apply();upC();emptyDet();step();loop()}});
@@ -240,7 +240,7 @@ apply();upC();emptyDet();step();loop();
 <script>
 (function(){
   var note=document.querySelector('.note');if(!note)return;
-  var CFG={pick:'#feed .it.match',target:'#det',label:{ru:'Разобрать горячий лид',en:'Analyze a lead'},wait:{ru:'Ищу совпадения...',en:'Scanning...'}};
+  var CFG={force:'step',pick:'#feed .it.match',target:'#det',label:{ru:'Разобрать горячий лид',en:'Analyze a lead'},wait:{ru:'Ищу совпадения...',en:'Scanning...'}};
   var b=document.createElement('button');b.className='mrun';b.type='button';b.innerHTML='<i>&#9654;</i><span></span>';
   note.parentNode.insertBefore(b,note.nextSibling);
   function lang(){return (document.documentElement.lang||'ru').slice(0,2)==='en'?'en':'ru'}
@@ -248,7 +248,7 @@ apply();upC();emptyDet();step();loop();
   label();new MutationObserver(function(){label()}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
   function go(){var el=document.querySelector(CFG.pick);if(!el)return false;el.click();
     setTimeout(function(){var t=document.querySelector(CFG.target);t=t?(t.closest('.panel')||t):null;if(t){window.scrollTo({top:t.getBoundingClientRect().top+window.pageYOffset-8,behavior:'smooth'})}},150);return true}
-  b.onclick=function(){if(go())return;b.disabled=true;label(CFG.wait[lang()]);var n=0,iv=setInterval(function(){n++;if(go()||n>40){clearInterval(iv);b.disabled=false;label()}},400)};
+  b.onclick=function(){if(go())return;b.disabled=true;label(CFG.wait[lang()]);var n=0,iv=setInterval(function(){n++;if(CFG.force){try{window[CFG.force]()}catch(e){}}if(go()||n>40){clearInterval(iv);b.disabled=false;label()}},400)};
 })();
 </script>
 <!-- AweLabs analytics -->
