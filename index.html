@@ -232,6 +232,25 @@ document.querySelectorAll('.lang button').forEach(function(b){b.onclick=function
   idx=0;sel=null;items=[];c={s:0,m:0,h:0,d:0};nChats=16;$('feed').innerHTML='';apply();upC();emptyDet();step();loop()}});
 apply();upC();emptyDet();step();loop();
 </script>
+<style>
+.mrun{display:none}
+@media(max-width:860px){.mrun{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:52px;margin:0 0 14px;border:0;border-radius:14px;background:var(--lime,#e8f55a);color:#0a0a0b;font:700 16px var(--body,sans-serif);box-shadow:0 6px 24px rgba(232,245,90,.18);cursor:pointer}
+.mrun[disabled]{opacity:.55}.mrun i{font-style:normal;font-size:13px}}
+</style>
+<script>
+(function(){
+  var note=document.querySelector('.note');if(!note)return;
+  var CFG={pick:'#feed .it.match',target:'#det',label:{ru:'Разобрать горячий лид',en:'Analyze a lead'},wait:{ru:'Ищу совпадения...',en:'Scanning...'}};
+  var b=document.createElement('button');b.className='mrun';b.type='button';b.innerHTML='<i>&#9654;</i><span></span>';
+  note.parentNode.insertBefore(b,note.nextSibling);
+  function lang(){return (document.documentElement.lang||'ru').slice(0,2)==='en'?'en':'ru'}
+  function label(t){b.querySelector('span').textContent=t||CFG.label[lang()]}
+  label();new MutationObserver(function(){label()}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+  function go(){var el=document.querySelector(CFG.pick);if(!el)return false;el.click();
+    setTimeout(function(){var t=document.querySelector(CFG.target);t=t?(t.closest('.panel')||t):null;if(t){window.scrollTo({top:t.getBoundingClientRect().top+window.pageYOffset-8,behavior:'smooth'})}},150);return true}
+  b.onclick=function(){if(go())return;b.disabled=true;label(CFG.wait[lang()]);var n=0,iv=setInterval(function(){n++;if(go()||n>40){clearInterval(iv);b.disabled=false;label()}},400)};
+})();
+</script>
 <!-- AweLabs analytics -->
 <script>
 (function(){
